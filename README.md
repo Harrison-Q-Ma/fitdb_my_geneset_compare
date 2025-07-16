@@ -1,3 +1,9 @@
+Required packages:
+- numpy
+- scipy
+- pandas
+- matplotlib
+
 Run parameters:  
 ```
 python compare_gene_sets.py \
