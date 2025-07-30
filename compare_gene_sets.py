@@ -28,13 +28,7 @@ try:
 except ImportError as _e:
     raise SystemExit("pandas is required: %s" % _e)
 
-
-# statsmodels for FDR (preferred)
-_HAVE_STATSMODELS = True
-try:
-    from statsmodels.stats.multitest import multipletests
-except Exception:
-    _HAVE_STATSMODELS = False
+from statsmodels.stats.multitest import multipletests
 
 
 # ------------------------------------------------------------------
@@ -75,26 +69,6 @@ def load_fitdb_json(path: Union[str, Path]) -> Dict[str, Set[str]]:
     for k, v in obj.items():
         out[k] = set(parse_gene_input(v))
     return out
-
-
-# ------------------------------------------------------------------
-# Benjamini-Hochberg FDR fallback
-# ------------------------------------------------------------------
-
-def _bh_fdr(pvals: Sequence[float]):
-    m = len(pvals)
-    indexed = sorted(enumerate(pvals), key=lambda kv: kv[1])
-    adj = [0.0] * m
-    prev = 1.0
-    for rank, (idx, pv) in enumerate(indexed, start=1):
-        val = pv * m / rank
-        if val > prev:
-            val = prev
-        prev = val
-        adj[idx] = min(val, 1.0)
-    for i in range(m - 2, -1, -1):
-        adj[i] = min(adj[i], adj[i + 1])
-    return adj
 
 
 # ------------------------------------------------------------------
@@ -255,10 +229,8 @@ def compare_gene_sets_fast(
         "overlap": overlaps_serialized,
     })
 
-    if _HAVE_STATSMODELS:
-        _, fdrs, _, _ = multipletests(results_df["p"].to_numpy(), method="fdr_bh")
-    else:
-        fdrs = _bh_fdr(results_df["p"].tolist())
+    fdrs = multipletests(results_df["p"].to_numpy(), method="fdr_bh")[1] 
+    print(fdrs)
     results_df["fdr"] = fdrs
 
     results_df.sort_values(["p", "fdr"], inplace=True, ignore_index=True)
