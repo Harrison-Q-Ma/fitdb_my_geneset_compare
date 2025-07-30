@@ -230,7 +230,7 @@ def compare_gene_sets_fast(
     })
 
     fdrs = multipletests(results_df["p"].to_numpy(), method="fdr_bh")[1] 
-    print(fdrs)
+    # print(fdrs)
     results_df["fdr"] = fdrs
 
     results_df.sort_values(["p", "fdr"], inplace=True, ignore_index=True)
